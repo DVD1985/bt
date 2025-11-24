@@ -451,9 +451,15 @@ function GameRoom({ gameId, user, onLeave }) {
   const handleSurrender = async () => {
     if (game.phase === 'finished') return;
     const winner = role === 'host' ? 'guest' : 'host';
+    
+    // Calcular fecha de expiración (24h)
+    const expireAt = new Date();
+    expireAt.setHours(expireAt.getHours() + 24);
+
     await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'games', gameId), {
       phase: 'finished',
       winner: winner,
+      expireAt: expireAt,
       logs: [...game.logs, { text: `${role === 'host' ? 'Anfitrión' : 'Invitado'} se ha rendido.`, type: 'end', time: Date.now() }]
     });
   };
@@ -514,6 +520,12 @@ function GameRoom({ gameId, user, onLeave }) {
              if (enemyBoard[idx].type === 'COMMANDER') {
                 updates.winner = role;
                 updates.phase = 'finished';
+                
+                // Calcular fecha de expiración (24h)
+                const expireAt = new Date();
+                expireAt.setHours(expireAt.getHours() + 24);
+                updates.expireAt = expireAt;
+
                 newLogs.push({ text: `¡El Comandante enemigo ha caído! Victoria para ${role}.`, type: 'win', time: Date.now() });
              }
 
@@ -582,7 +594,43 @@ function GameRoom({ gameId, user, onLeave }) {
   const currentMyBoard = game.phase === 'setup' ? setupBoard : myBoardData;
 
   return (
-    <div className="flex flex-col gap-4 h-full">
+    <div className="flex flex-col gap-4 h-full relative">
+      {/* GAME OVER OVERLAY */}
+      {game.phase === 'finished' && (
+        <div className="absolute inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-500">
+          <div className="bg-slate-900 border-2 border-emerald-500 p-8 rounded-2xl shadow-[0_0_50px_rgba(16,185,129,0.3)] max-w-md w-full text-center relative overflow-hidden">
+             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-emerald-500 to-transparent"></div>
+             
+             {game.winner === role ? (
+                <>
+                  <Crown size={64} className="mx-auto text-yellow-400 mb-4 animate-bounce" />
+                  <h2 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-b from-yellow-300 to-yellow-600 mb-2">¡VICTORIA!</h2>
+                  <p className="text-slate-400 mb-6">Has demostrado superioridad táctica, comandante.</p>
+                </>
+             ) : (
+                <>
+                  <Skull size={64} className="mx-auto text-red-500 mb-4 animate-pulse" />
+                  <h2 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-b from-red-400 to-red-700 mb-2">DERROTA</h2>
+                  <p className="text-slate-400 mb-6">Tus fuerzas han sido eliminadas. Reagrúpate.</p>
+                </>
+             )}
+
+             <div className="flex gap-4 justify-center">
+                <button 
+                  onClick={onLeave}
+                  className="px-6 py-3 bg-slate-700 hover:bg-slate-600 text-white rounded font-bold transition uppercase tracking-widest"
+                >
+                  Volver al Lobby
+                </button>
+             </div>
+             
+             <div className="mt-4 text-xs text-slate-600 font-mono">
+                Esta sala se autodestruirá en 24h.
+             </div>
+          </div>
+        </div>
+      )}
+
       {/* HUD Superior */}
       <div className="bg-slate-900/80 backdrop-blur p-4 rounded-xl border border-slate-800 flex justify-between items-center shadow-2xl relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-r from-emerald-900/10 via-transparent to-red-900/10 pointer-events-none"></div>
