@@ -138,21 +138,44 @@ export default function App() {
   const [user, setUser] = useState(null);
   const [gameId, setGameId] = useState(null);
   const [view, setView] = useState('lobby'); // lobby, game, rules
+  const [connectionError, setConnectionError] = useState(null);
 
   useEffect(() => {
     const initAuth = async () => {
-        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-            await signInWithCustomToken(auth, __initial_auth_token);
-        } else {
-            await signInAnonymously(auth);
+        try {
+            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                await signInWithCustomToken(auth, __initial_auth_token);
+            } else {
+                await signInAnonymously(auth);
+            }
+        } catch (e) {
+            console.error("Auth Error:", e);
+            setConnectionError(`Error de autenticación: ${e.message}`);
         }
     };
     initAuth();
     const unsub = onAuthStateChanged(auth, (u) => {
       setUser(u);
+    }, (error) => {
+        setConnectionError(`Error de sesión: ${error.message}`);
     });
     return () => unsub();
   }, []);
+
+  if (connectionError) {
+      return (
+          <div className="flex flex-col items-center justify-center h-screen bg-slate-900 text-red-400 p-4 text-center">
+              <Skull size={48} className="mb-4" />
+              <h2 className="text-xl font-bold mb-2">Error de Conexión</h2>
+              <p className="max-w-md bg-slate-950 p-4 rounded border border-red-900/50 font-mono text-sm">
+                  {connectionError}
+              </p>
+              <p className="mt-4 text-slate-500 text-sm">
+                  Verifica tu conexión a internet y la configuración de Firebase.
+              </p>
+          </div>
+      );
+  }
 
   if (!user) return <div className="flex items-center justify-center h-screen bg-slate-900 text-white">Cargando sistema de combate...</div>;
 
@@ -197,7 +220,12 @@ function Lobby({ user, onJoin }) {
       const g = [];
       snapshot.forEach(doc => g.push({ id: doc.id, ...doc.data() }));
       setGames(g.sort((a, b) => b.createdAt - a.createdAt));
-    }, (err) => console.error("Error fetching games", err));
+    }, (err) => {
+        console.error("Error fetching games", err);
+        // Propagar error al componente padre si fuera posible, o manejarlo aquí
+        // Por simplicidad en este componente gigante, usaremos un alert o log visible temporal
+        alert(`Error de conexión con la base de datos: ${err.message}\nCódigo: ${err.code}`);
+    });
     return () => unsub();
   }, [user]);
 
