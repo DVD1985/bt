@@ -202,6 +202,11 @@ export default function App() {
         {view === 'lobby' && !gameId && <Lobby user={user} onJoin={(id) => { setGameId(id); setView('game'); }} />}
         {view === 'game' && gameId && <GameRoom gameId={gameId} user={user} onLeave={() => { setGameId(null); setView('lobby'); }} />}
       </main>
+
+      {/* DEBUG FOOTER - Para verificar sincronización */}
+      <footer className="fixed bottom-0 right-0 bg-black/80 text-xs text-slate-500 p-1 font-mono pointer-events-none z-50">
+        AppID: {appId} | Proj: {firebaseConfig.projectId?.slice(0,6)}...
+      </footer>
     </div>
   );
 }
