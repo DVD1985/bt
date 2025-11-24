@@ -7,7 +7,7 @@ import {
   signInWithCustomToken
 } from 'firebase/auth';
 import { 
-  getFirestore, 
+  initializeFirestore, 
   collection, 
   addDoc, 
   doc, 
@@ -52,7 +52,8 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
-const db = getFirestore(app);
+// Forzar Long Polling para evitar bloqueos de WebSockets o proxies estrictos
+const db = initializeFirestore(app, { experimentalForceLongPolling: true });
 const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app';
 
 // --- CONSTANTES Y LÓGICA DEL JUEGO ---
