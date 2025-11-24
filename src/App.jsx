@@ -50,13 +50,6 @@ const firebaseConfig = {
   measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID
 };
 
-// DEBUG: Verificar si las variables se cargan
-console.log("--- FIREBASE CONFIG DEBUG ---");
-Object.entries(firebaseConfig).forEach(([key, value]) => {
-  console.log(`${key}:`, value ? (value.length > 5 ? `${value.slice(0, 5)}...` : value) : "MISSING/UNDEFINED");
-});
-console.log("-----------------------------");
-
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
